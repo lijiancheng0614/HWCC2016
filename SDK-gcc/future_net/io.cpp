@@ -55,7 +55,7 @@ void print_time(const char *head)
         out_ms += 1000;
         out_s -= 1;
     }
-    printf("%s date/time is: %s \tused time is %lu s %d ms.\n", head, asctime(timeinfo), out_s, out_ms); 
+    printf("%s time: %s \tused time: %lu s %d ms.\n", head, asctime(timeinfo), out_s, out_ms); 
 }
 
 int read_file(char ** const buff, const unsigned int spec, const char * const filename)
@@ -63,10 +63,10 @@ int read_file(char ** const buff, const unsigned int spec, const char * const fi
     FILE *fp = fopen(filename, "r");
     if (fp == NULL)
     {
-        PRINT("Fail to open file %s, %s.\n", filename, strerror(errno));
+        PRINT("Fail to open %s, %s.\n", filename, strerror(errno));
         return 0;
     }
-    PRINT("Open file %s OK.\n", filename);
+    PRINT("Open %s.\n", filename);
 
     char line[MAX_LINE_LEN + 2];
     unsigned int cnt = 0;
@@ -81,7 +81,7 @@ int read_file(char ** const buff, const unsigned int spec, const char * const fi
         cnt++;
     }
     fclose(fp);
-    PRINT("There are %d lines in file %s.\n", cnt, filename);
+    PRINT("%d lines in %s.\n", cnt, filename);
 
     return cnt;
 }
