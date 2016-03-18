@@ -1,6 +1,10 @@
 #ifndef __ROUTE_H__
 #define __ROUTE_H__
 
-void search_route(char *graph[5000], int edge_num, char *condition);
+#include <vector>
+using namespace std;
+typedef vector<int> vi;
+
+void search_route(vector<vi> topo, vi demand);
 
 #endif

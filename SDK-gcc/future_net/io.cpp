@@ -7,6 +7,7 @@
 #include <errno.h>
 #include <unistd.h>
 #include <signal.h>
+#include "lib_io.h"
 
 #define INLINE  static __inline
 #define PRINT   printf
@@ -58,32 +59,43 @@ void print_time(const char *head)
     printf("%s time: %s \tused time: %lu s %d ms.\n", head, asctime(timeinfo), out_s, out_ms); 
 }
 
-int read_file(char ** const buff, const unsigned int spec, const char * const filename)
+bool read(FILE *fp, int &x)
 {
+    // read positive integer
+    char c = getc(fp);
+    while (c < '0' || c > '9')
+        c = getc(fp);
+    for (x = 0; c >= '0' && c <= '9'; c = getc(fp))
+        x = x * 10 + c - '0';
+    if (c == '\r')
+        c = getc(fp);
+    if (c == '\n')
+        return 0;
+    return 1;
+}
+
+vector<vi> read_file(const char * const filename)
+{
+    vector<vi> ans;
     FILE *fp = fopen(filename, "r");
     if (fp == NULL)
     {
         PRINT("Fail to open %s, %s.\n", filename, strerror(errno));
-        return 0;
+        return ans;
     }
     PRINT("Open %s.\n", filename);
 
-    char line[MAX_LINE_LEN + 2];
-    unsigned int cnt = 0;
-    while ((cnt < spec) && !feof(fp))
+    while (!feof(fp))
     {
-        line[0] = 0;
-        fgets(line, MAX_LINE_LEN + 2, fp);
-        if (line[0] == 0)   continue;
-        buff[cnt] = (char *)malloc(MAX_LINE_LEN + 2);
-        strncpy(buff[cnt], line, MAX_LINE_LEN + 2 - 1);
-        buff[cnt][4001] = 0;
-        cnt++;
+        vi a;
+        int x;
+        while (read(fp, x) && !feof(fp))
+            a.push_back(x);
+        ans.push_back(a);
     }
     fclose(fp);
-    PRINT("%d lines in %s.\n", cnt, filename);
-
-    return cnt;
+    PRINT("%d lines in %s.\n", (int)ans.size(), filename);
+    return ans;
 }
 
 void write_result(const char * const filename)
@@ -92,12 +104,6 @@ void write_result(const char * const filename)
         return;
 
     write_file(1, g_result, filename);
-}
-
-void release_buff(char ** const buff, const int valid_item_num)
-{
-    for (int i = 0; i < valid_item_num; i++)
-        free(buff[i]);
 }
 
 INLINE void write_file(const bool cover, const char * const buff, const char * const filename)
