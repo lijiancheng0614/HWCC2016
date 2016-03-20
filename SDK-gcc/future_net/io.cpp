@@ -63,12 +63,12 @@ bool read(FILE *fp, int &x)
 {
     // read positive integer
     char c = getc(fp);
-    while (c < '0' || c > '9')
+    while (!feof(fp) && c != '\n' && (c < '0' || c > '9'))
         c = getc(fp);
+    if (feof(fp) || c == '\n')
+        return 0;
     for (x = 0; c >= '0' && c <= '9'; c = getc(fp))
         x = x * 10 + c - '0';
-    if (c == '\r')
-        c = getc(fp);
     if (c == '\n')
         return 0;
     return 1;
@@ -88,10 +88,13 @@ vector<vi> read_file(const char * const filename)
     while (!feof(fp))
     {
         vi a;
-        int x;
+        int x = -1;
         while (read(fp, x) && !feof(fp))
             a.push_back(x);
-        ans.push_back(a);
+        if (x >= 0)
+            a.push_back(x);
+        if (a.size() > 0)
+            ans.push_back(a);
     }
     fclose(fp);
     PRINT("%d lines in %s.\n", (int)ans.size(), filename);
