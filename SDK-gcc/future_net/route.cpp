@@ -87,9 +87,9 @@ struct Solver
             return;
         if (cost + revGraph.d[k] + left - demand[k] >= ans)
             return;
-        if (k == t && left == 0)
+        if (k == t)
         {
-            if (cost < ans)
+            if (left == 0 && cost < ans)
             {
                 ans = cost;
                 pathBest = path;
