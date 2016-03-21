@@ -66,12 +66,14 @@ struct Solver
     vi path, pathBest;
     int ans; // best cost
     int a[M][4], b[N], bb[N];
+    int d[N]; // shortest path distance
+    int p[N][2]; // spfa previous node
     bool v[N]; // visited
     int s; // node count
     int t; // end point
     void init()
     {
-        ans = 1 << 30;
+        ans = 252645135;
         s = 0;
         memset(b, 0, sizeof(b));
     }
@@ -97,32 +99,52 @@ struct Solver
             k = temp.first;
             cost = temp.second;
             bool flag = 1;
-            for (int i = bb[k]; i; i = a[i][0])
+            if (left == 0)
             {
-                int j = a[i][1];
-                if (v[j])
-                    continue;
-                if (cost + a[i][2] + revGraph.d[j] + left - demand[j] >= ans)
-                    continue;
-                if (j == t)
+                int dis = cost + spfa(k);
+                if (dis < ans)
                 {
-                    if (left == 0 && cost + a[i][2] < ans)
+                    ans = dis;
+                    stack<int> pathStack;
+                    for (int i = t; i != k; i = p[i][0])
+                        pathStack.push(p[i][1]);
+                    pathBest = path;
+                    while (!pathStack.empty())
                     {
-                        ans = cost + a[i][2];
-                        pathBest = path;
-                        pathBest.push_back(a[i][3]);
+                        pathBest.push_back(pathStack.top());
+                        pathStack.pop();
                     }
-                    continue;
                 }
-                path.push_back(a[i][3]);
-                cost += a[i][2];
-                if (demand[j])
-                    --left;
-                v[j] = 1;
-                st.push(pii(j, cost));
-                bb[k] = a[i][0];
-                flag = 0;
-                break;
+            }
+            else
+            {
+                for (int i = bb[k]; i; i = a[i][0])
+                {
+                    int j = a[i][1];
+                    if (v[j])
+                        continue;
+                    if (cost + a[i][2] + revGraph.d[j] + left - demand[j] >= ans)
+                        continue;
+                    if (j == t)
+                    {
+                        if (left == 0 && cost + a[i][2] < ans)
+                        {
+                            ans = cost + a[i][2];
+                            pathBest = path;
+                            pathBest.push_back(a[i][3]);
+                        }
+                        continue;
+                    }
+                    path.push_back(a[i][3]);
+                    cost += a[i][2];
+                    if (demand[j])
+                        --left;
+                    v[j] = 1;
+                    st.push(pii(j, cost));
+                    bb[k] = a[i][0];
+                    flag = 0;
+                    break;
+                }
             }
             if (flag)
             {
@@ -134,6 +156,36 @@ struct Solver
                 path.pop_back();
             }
         }
+    }
+    int spfa(int x)
+    {
+        queue<int> q;
+        memset(d, 15, sizeof(d));
+        v[x] = 1;
+        d[x] = 0;
+        q.push(x);
+        while (!q.empty())
+        {
+            int k = q.front();
+            q.pop();
+            for (int i = b[k]; i; i = a[i][0])
+            {
+                int j = a[i][1];
+                if (d[k] + a[i][2] < d[j])
+                {
+                    d[j] = d[k] + a[i][2];
+                    p[j][0] = k;
+                    p[j][1] = a[i][3];
+                    if (!v[j])
+                    {
+                        q.push(j);
+                        v[j] = 1;
+                    }
+                }
+            }
+            v[k] = 0;
+        }
+        return d[t];
     }
     void output()
     {
