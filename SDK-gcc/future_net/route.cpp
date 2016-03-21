@@ -2,10 +2,13 @@
 #include <string.h>
 #include <time.h>
 #include <queue>
+#include <stack>
+#include <algorithm>
 #include "route.h"
 #include "lib_record.h"
 #define N 602
 #define M 4802
+typedef pair<int, int> pii;
 
 int startTime;
 
@@ -61,7 +64,7 @@ struct Solver
 {
     vi path, pathBest;
     int ans; // best cost
-    int a[M][4], b[N];
+    int a[M][4], b[N], bb[N];
     bool demand[N];
     bool v[N]; // visited
     int s; // node count
@@ -81,36 +84,57 @@ struct Solver
         a[s][2] = k;
         a[s][3] = l;
     }
-    void dfs(int k, int left, int cost)
+    void astar(int k, int left, int cost)
     {
-        if (time(NULL) - startTime > 9)
-            return;
-        if (cost + revGraph.d[k] + left - demand[k] >= ans)
-            return;
-        if (k == t)
-        {
-            if (left == 0 && cost < ans)
-            {
-                ans = cost;
-                pathBest = path;
-            }
-            return;
-        }
+        stack<pii> st;
+        st.push(pii(k, cost));
         v[k] = 1;
-        for (int i = b[k]; i; i = a[i][0])
+        memcpy(bb, b, sizeof(b));
+        while (!st.empty())
         {
-            int j = a[i][1];
-            if (v[j])
-                continue;
-            int k = a[i][2];
-            path.push_back(a[i][3]);
-            if (demand[j])
-                dfs(j, left - 1, cost + k);
-            else
-                dfs(j, left, cost + k);
-            path.pop_back();
+            if (time(NULL) - startTime > 9)
+                return;
+            pii temp = st.top();
+            k = temp.first;
+            cost = temp.second;
+            bool flag = 1;
+            for (int i = bb[k]; i; i = a[i][0])
+            {
+                int j = a[i][1];
+                if (v[j])
+                    continue;
+                if (cost + a[i][2] + revGraph.d[j] >= ans)
+                    continue;
+                if (j == t)
+                {
+                    if (left == 0 && cost + a[i][2] < ans)
+                    {
+                        ans = cost + a[i][2];
+                        pathBest = path;
+                        pathBest.push_back(a[i][3]);
+                    }
+                    continue;
+                }
+                path.push_back(a[i][3]);
+                cost += a[i][2];
+                if (demand[j])
+                    --left;
+                v[j] = 1;
+                st.push(pii(j, cost));
+                bb[k] = a[i][0];
+                flag = 0;
+                break;
+            }
+            if (flag)
+            {
+                v[k] = 0;
+                bb[k] = b[k];
+                if (demand[k])
+                    ++left;
+                st.pop();
+                path.pop_back();
+            }
         }
-        v[k] = 0;
     }
     void output()
     {
@@ -119,10 +143,15 @@ struct Solver
     }
 } g;
 
+bool cmp(const vector<int> &a, const vector<int> &b) {
+    return a[3] > b[3];
+}
+
 void search_route(vector<vi> topo, vi demand)
 {
     // topo[i]: LinkID, SourceID, DestinationID, Cost
     startTime = time(NULL);
+    sort(topo.begin(), topo.end(), cmp);
     g.init();
     for (int i = 0; i < (int)topo.size(); ++i)
     {
@@ -135,6 +164,6 @@ void search_route(vector<vi> topo, vi demand)
     for (int i = 2; i < tot; ++i)
         g.demand[demand[i]] = 1;
     revGraph.spfa(g.t);
-    g.dfs(s, tot - 2, 0);
+    g.astar(s, tot - 2, 0);
     g.output();
 }
