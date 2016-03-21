@@ -11,6 +11,7 @@
 typedef pair<int, int> pii;
 
 int startTime;
+bool demand[N];
 
 struct graph
 {
@@ -45,9 +46,9 @@ struct graph
             for (int i = b[k]; i; i = a[i][0])
             {
                 int j = a[i][1];
-                if (d[k] + a[i][2] < d[j])
+                if (d[k] + a[i][2] - demand[j] < d[j])
                 {
-                    d[j] = d[k] + a[i][2];
+                    d[j] = d[k] + a[i][2] - demand[j];
                     if (!v[j])
                     {
                         q.push(j);
@@ -65,7 +66,6 @@ struct Solver
     vi path, pathBest;
     int ans; // best cost
     int a[M][4], b[N], bb[N];
-    bool demand[N];
     bool v[N]; // visited
     int s; // node count
     int t; // end point
@@ -74,7 +74,6 @@ struct Solver
         ans = 1 << 30;
         s = 0;
         memset(b, 0, sizeof(b));
-        memset(demand, 0, sizeof(demand));
     }
     void add(int i, int j, int k, int l)
     {
@@ -103,7 +102,7 @@ struct Solver
                 int j = a[i][1];
                 if (v[j])
                     continue;
-                if (cost + a[i][2] + revGraph.d[j] >= ans)
+                if (cost + a[i][2] + revGraph.d[j] + left - demand[j] >= ans)
                     continue;
                 if (j == t)
                 {
@@ -147,7 +146,7 @@ bool cmp(const vector<int> &a, const vector<int> &b) {
     return a[3] > b[3];
 }
 
-void search_route(vector<vi> topo, vi demand)
+void search_route(vector<vi> topo, vi demandVector)
 {
     // topo[i]: LinkID, SourceID, DestinationID, Cost
     startTime = time(NULL);
@@ -158,11 +157,12 @@ void search_route(vector<vi> topo, vi demand)
         g.add(topo[i][1], topo[i][2], topo[i][3], topo[i][0]);
         revGraph.add(topo[i][2], topo[i][1], topo[i][3]);
     }
-    int s = demand[0];
-    g.t = demand[1];
-    int tot = demand.size();
+    int s = demandVector[0];
+    g.t = demandVector[1];
+    int tot = demandVector.size();
+    memset(demand, 0, sizeof(demand));
     for (int i = 2; i < tot; ++i)
-        g.demand[demand[i]] = 1;
+        demand[demandVector[i]] = 1;
     revGraph.spfa(g.t);
     g.astar(s, tot - 2, 0);
     g.output();
