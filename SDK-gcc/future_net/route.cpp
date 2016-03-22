@@ -189,7 +189,7 @@ struct Solver
         }
         return d[t];
     }
-    void greedyGetPath(int x, int y)
+    void greedyGetPath(int x, int y, int left)
     {
         stack<int> pathStack;
         v[x] = 1;
@@ -197,6 +197,7 @@ struct Solver
         {
             v[i] = 1;
             pathStack.push(p[i][1]);
+            left -= demand[i];
         }
         while (!pathStack.empty())
         {
@@ -204,9 +205,8 @@ struct Solver
             pathStack.pop();
         }
     }
-    void greedy(int k)
+    void greedy(int k, int tot)
     {
-        int tot = (int)demandVec.size();
         while (1)
         {
             if (time(NULL) - startTime > 9)
@@ -214,12 +214,15 @@ struct Solver
             random_shuffle(demandVec.begin(), demandVec.end());
             memset(v, 0, sizeof(v));
             spfa(k);
+            int left = tot - 1;
             int next = demandVec[0];
             int cost = d[next];
-            if (cost + revGraph.d[next] + tot - 3 >= ans)
+            if (cost + revGraph.d[next] >= ans)
                 continue;
             path.clear();
-            greedyGetPath(k, next);
+            greedyGetPath(k, next, left);
+            if (cost + revGraph.d[next] + left >= ans)
+                continue;
             for (int i = 1; i < tot; ++i)
                 if (!v[demandVec[i]])
                 {
@@ -230,7 +233,12 @@ struct Solver
                         cost = ans;
                         break;
                     }
-                    greedyGetPath(next, demandVec[i]);
+                    greedyGetPath(next, demandVec[i], left);
+                    if (cost + revGraph.d[next] + left >= ans)
+                    {
+                        cost = ans;
+                        break;
+                    }
                     next = demandVec[i];
                 }
             if (cost >= ans)
@@ -240,7 +248,7 @@ struct Solver
             if (cost < ans)
             {
                 ans = cost;
-                greedyGetPath(next, t);
+                greedyGetPath(next, t, left);
                 pathBest = path;
             }
         }
@@ -249,6 +257,7 @@ struct Solver
     {
         for (int i = 0; i < (int)pathBest.size(); ++i)
             record_result(pathBest[i]);
+        printf("%d\n", ans);
     }
 } g;
 
@@ -280,7 +289,7 @@ void search_route(vector<vi> topo, vi demandVector)
     }
     revGraph.spfa(g.t);
     if (edgenum > 400)
-        g.greedy(s);
+        g.greedy(s, tot - 2);
     else
         g.astar(s, tot - 2, 0);
     g.output();
