@@ -214,6 +214,8 @@ struct Solver
             random_shuffle(demandVec.begin(), demandVec.end());
             memset(v, 0, sizeof(v));
             spfa(k);
+            if (v[t])
+                continue;
             int left = tot - 1;
             int next = demandVec[0];
             int cost = d[next];
@@ -227,21 +229,23 @@ struct Solver
                 if (!v[demandVec[i]])
                 {
                     spfa(next);
+                    if (v[t])
+                        break;
                     cost += d[demandVec[i]];
                     if (cost + revGraph.d[demandVec[i]] >= ans)
                     {
-                        cost = ans;
+                        v[t] = 1;
                         break;
                     }
                     greedyGetPath(next, demandVec[i], left);
                     if (cost + revGraph.d[next] + left >= ans)
                     {
-                        cost = ans;
+                        v[t] = 1;
                         break;
                     }
                     next = demandVec[i];
                 }
-            if (cost >= ans)
+            if (v[t])
                 continue;
             spfa(next);
             cost += d[t];
