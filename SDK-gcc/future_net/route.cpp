@@ -8,6 +8,7 @@
 #include "lib_record.h"
 #define N 602
 #define M 4802
+#define MAX_ITER 100000
 typedef pair<int, int> pii;
 
 int startTime;
@@ -95,7 +96,7 @@ struct Solver
         memcpy(bb, b, sizeof(b));
         while (!st.empty())
         {
-            if (time(NULL) - startTime > 9)
+            if (time(NULL) - startTime > 19)
                 return;
             pii temp = st.top();
             k = temp.first;
@@ -209,13 +210,11 @@ struct Solver
     {
         while (1)
         {
-            if (time(NULL) - startTime > 9)
+            if (time(NULL) - startTime > 19)
                 return;
             random_shuffle(demandVec.begin(), demandVec.end());
             memset(v, 0, sizeof(v));
             spfa(k);
-            if (v[t])
-                continue;
             int left = tot - 1;
             int next = demandVec[0];
             int cost = d[next];
@@ -223,29 +222,34 @@ struct Solver
                 continue;
             path.clear();
             greedyGetPath(k, next, left);
+            if (left > 0 && v[t])
+                continue;
             if (cost + revGraph.d[next] + left >= ans)
                 continue;
             for (int i = 1; i < tot; ++i)
                 if (!v[demandVec[i]])
                 {
                     spfa(next);
-                    if (v[t])
-                        break;
                     cost += d[demandVec[i]];
                     if (cost + revGraph.d[demandVec[i]] >= ans)
                     {
-                        v[t] = 1;
+                        cost = ans;
                         break;
                     }
                     greedyGetPath(next, demandVec[i], left);
+                    if (left > 0 && v[t])
+                    {
+                        cost = ans;
+                        break;
+                    }
                     if (cost + revGraph.d[next] + left >= ans)
                     {
-                        v[t] = 1;
+                        cost = ans;
                         break;
                     }
                     next = demandVec[i];
                 }
-            if (v[t])
+            if (cost >= ans)
                 continue;
             spfa(next);
             cost += d[t];
@@ -261,7 +265,7 @@ struct Solver
     {
         for (int i = 0; i < (int)pathBest.size(); ++i)
             record_result(pathBest[i]);
-        printf("%d\n", ans);
+        // printf("%d\n", ans);
     }
 } g;
 
