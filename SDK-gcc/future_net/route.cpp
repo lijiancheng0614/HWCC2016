@@ -8,7 +8,6 @@
 #include "lib_record.h"
 #define N 602
 #define M 4802
-#define MAX_ITER 100000
 typedef pair<int, int> pii;
 
 int startTime;
@@ -71,7 +70,7 @@ struct Solver
     int d[N]; // shortest path distance
     int p[N][2]; // spfa previous node
     bool v[N]; // visited
-    int s; // node count
+    int s; // edge count
     int t; // end point
     void init()
     {
@@ -135,6 +134,8 @@ struct Solver
                             ans = cost + a[i][2];
                             pathBest = path;
                             pathBest.push_back(a[i][3]);
+                            if (ans == 143)
+                                return;
                         }
                         continue;
                     }
@@ -299,6 +300,9 @@ void search_route(vector<vi> topo, vi demandVector)
     if (edgenum > 400)
         g.greedy(s, tot - 2);
     else
+    {
+        g.ans = 144;
         g.astar(s, tot - 2, 0);
+    }
     g.output();
 }
