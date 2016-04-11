@@ -11,8 +11,8 @@
 typedef pair<int, int> pii;
 
 int startTime;
-bool demand[N];
-vi demandVec;
+bool demand[N], other[N];
+vi demandVec, otherVec;
 
 struct graph
 {
@@ -66,6 +66,7 @@ struct Solver
 {
     vi path, pathBest;
     int ans; // best cost
+    int d_other[N][N];
     int a[M][4], b[N], bb[N];
     int d[N]; // shortest path distance
     int p[N][2]; // spfa previous node
@@ -262,6 +263,51 @@ struct Solver
             }
         }
     }
+    void floyd()
+    {
+        memset(d_other, 15, sizeof(d_other));
+        int n = otherVec.size();
+        for (int k = 0; k < n; ++k)
+        {
+            int x = otherVec[k];
+            d_other[x][x] = 0;
+            for (int i = b[x]; i; i = a[i][0])
+            {
+                int y = a[i][1];
+                if (other[y])
+                    d_other[x][y] = a[i][2];
+            }
+        }
+        for (int k = 0; k < n; ++k)
+        {
+            int z = otherVec[k];
+            for (int i = 0; i < n; ++i)
+                if (k != i)
+                {
+                    int x = otherVec[i];
+                    for (int j = 0; j < n; ++j)
+                        if (k != i && k != j)
+                        {
+                            int y = otherVec[j];
+                            d_other[x][y] = min(d_other[x][y], d_other[x][z] + d_other[z][y]);
+                        }
+                }
+        }
+        // printf("===== %d points\n", n);
+        // for (int i = 0; i < n; ++i)
+        //     printf("%d ", otherVec[i]);
+        // puts("");
+        // for (int i = 0; i < n; ++i)
+        // {
+        //     int x = otherVec[i];
+        //     for (int j = 0; j < n; ++j)
+        //     {
+        //         int y = otherVec[j];
+        //         printf("%d ", d_other[x][y] == 252645135 ? -1 : d_other[x][y]);
+        //     }
+        //     puts("");
+        // }
+    }
     void output()
     {
         for (int i = 0; i < (int)pathBest.size(); ++i)
@@ -282,20 +328,37 @@ void search_route(vector<vi> topo, vi demandVector)
     int s = demandVector[0];
     int t = demandVector[1];
     int tot = demandVector.size();
-    sort(topo.begin(), topo.end(), cmp);
-    g.init();
-    for (int i = 0; i < edgenum; ++i)
-    {
-        g.add(topo[i][1], topo[i][2], topo[i][3], topo[i][0]);
-        revGraph.add(topo[i][2], topo[i][1], topo[i][3]);
-    }
-    g.t = t;
     memset(demand, 0, sizeof(demand));
+    demandVec.clear();
     for (int i = 2; i < tot; ++i)
     {
         demand[demandVector[i]] = 1;
         demandVec.push_back(demandVector[i]);
     }
+    sort(topo.begin(), topo.end(), cmp);
+    g.init();
+    memset(other, 0, sizeof(other));
+    otherVec.clear();
+    for (int i = 0; i < edgenum; ++i)
+    {
+        int x = topo[i][1];
+        int y = topo[i][2];
+        int z = topo[i][3];
+        g.add(x, y, z, topo[i][0]);
+        revGraph.add(y, x, z);
+        if (!demand[x] && !other[x] && x != s && x != t)
+        {
+            otherVec.push_back(x);
+            other[x] = 1;
+        }
+        if (!demand[y] && !other[y] && y != s && y != t)
+        {
+            otherVec.push_back(y);
+            other[y] = 1;
+        }
+    }
+    // g.floyd();
+    g.t = t;
     revGraph.spfa(g.t);
     if (edgenum > 400)
         g.greedy(s, tot - 2);
